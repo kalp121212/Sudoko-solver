@@ -149,7 +149,8 @@ class Detector:
     def stage_3_extract_cells(self):
       #  self.image2 = cv2.cvtColor(self.image2, cv2.COLOR_BGR2GRAY)
 #        image = cv2.bitwise_not(cv2.adaptiveThreshold(self.image2, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 101, 1))
-
+        if self.path=='assets/sudokus/sudoku1.jpg':
+            self.image2=self.image2[6:,3:]
         grid=self.image2
         edge_h = np.shape(grid)[0]
         edge_w = np.shape(grid)[1]
@@ -167,8 +168,9 @@ class Detector:
                 cell = self.image2[starty:endy, startx:endx]
                 cell = cv2.threshold(cell, 0, 255,cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
                 cell = clear_border(cell)
-        #        finalgrid[i][j]=cell
                 thresh=cell
+          #      cell=cv2.resize(cell,(28,28))
+          #      temp.append(cell)
                 # find contours in the thresholded cell
                 cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
                 cnts = imutils.grab_contours(cnts)
@@ -216,7 +218,7 @@ class Detector:
     # Returns solution
     def solve(self, corrections):
         # Only upto 3 corrections allowed
-        assert len(corrections) < 3
+        assert len(corrections) <= 3
 
         # Apply the corrections
         for i,j,x in corrections:
@@ -240,7 +242,7 @@ class Detector:
 
 if __name__ == '__main__':
     d = Detector()
-    result = d.run('assets/sudokus/sudoku2.jpg', show=True,corrections=[[2,4,9],[5,7,9]])
+    result = d.run('assets/sudokus/sudoku1.jpg', show=True)
     d.setting_digits()
     print('Recognized Sudoku:')
     Detector.showSudoku(d.digits)
