@@ -62,7 +62,7 @@ class Trainer:
         # (Optional) Figure out a way to do grid search on the hyperparameters to find the optimal set
         # Start Editing
         self.batch_size = 16 # Batch Size
-        self.num_epochs = 30 # Number of Epochs to train for
+        self.num_epochs = 20 # Number of Epochs to train for
         self.lr = 0.0001       # Learning rate
         # End Editing
 
@@ -74,10 +74,9 @@ class Trainer:
         # Also set an appropriate loss function. For beginners I suggest the Cross Entropy Loss
         # Also set an appropriate optimizer. For beginners go with gradient descent (SGD), but others can play around with Adam, AdaGrad and you can even try a scheduler for the learning rate
         # Start Editing
-       # self.model = nn.Sequential(nn.Linear(28*28,128),nn.ReLU(),nn.Linear(128,128),nn.ReLU(),nn.Linear(128,128),nn.ReLU(),nn.Linear(128,10),nn.ReLU())
         self.model=CNN()
         self.loss = nn.CrossEntropyLoss ()
-        self.optimizer = torch.optim.Adam(self.model.parameters())
+        self.optimizer = torch.optim.Adam(self.model.parameters(),lr=self.lr)
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.model.to(device)
         # End Editing
@@ -88,7 +87,6 @@ class Trainer:
 
         # Change Data into representation favored by ML library (eg torch.Tensor for pytorch)
         # This is the place you can reshape your data (eg for CNN's you will want each data point as 28x28 tensor and not 784 vector)
-        # Don't forget to normalize the data (eg. divide by 255 to bring the data into the range of 0-1)
         # Start Editing
         self.train_data = torch.tensor(self.loader.train_data)
         self.test_data = torch.tensor(self.loader.test_data)
@@ -115,8 +113,6 @@ class Trainer:
         if not self.model:
             return
 
-        x=[]
-        y=[]
         print("Training...")
         for epoch in range(self.num_epochs):
             train_loss = self.run_epoch()
@@ -129,17 +125,7 @@ class Trainer:
 
             print(f'Epoch #{epoch+1} trained')
             print(f"Train loss: {train_loss:.3f}")
-            x.append(epoch+1)
-            y.append(train_loss.item())
-       # print(x)
-       # print(y)
-        x=np.array(x)
-        y=np.array(y)
-        fig=plt.figure()
-       # plt.plot(x,y)
-       # plt.show()
-       # fig.savefig("graphs/3hiddenlayers.png")
-       # print('Training Complete')
+            self.test()
 
     def test(self):
         if not self.model:
@@ -215,7 +201,6 @@ class Trainer:
         if not self.model:
             return prediction
 
-#        print(image)
         # Start Editing
         image=torch.Tensor([[image]])
         # Change image into representation favored by ML library (eg torch.Tensor for pytorch)
@@ -223,9 +208,7 @@ class Trainer:
         # Don't forget to normalize the data (eg. divide by 255 to bring the data into the range of 0-1)
         # Predict the digit value using the model
         prediction=self.model(image)
-        #print(prediction)
         # End Editing
-      #  print(torch.argmax(prediction))
         return torch.argmax(prediction)
 
 if __name__ == '__main__':

@@ -79,11 +79,11 @@ class Detector:
     def run(self, path='assets/sudokus/sudoku2.jpg', show = False, corrections = []):
         self.path = path
         self.original = cv2.imread(path)
+        self.corrections=corrections
 
         self.run_stages(show)
         self.setting_digits()
         result = self.solve(corrections)
-
 
         if show:
             self.showSolved()
@@ -119,8 +119,6 @@ class Detector:
         return image
 
     def stage_2_reshape(self):
-        # find contours in the thresholded image and sort them by size in
-        # descending order
         cnts = cv2.findContours(self.image1.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
         cnts = sorted(cnts, key=cv2.contourArea, reverse=True)
@@ -136,19 +134,14 @@ class Detector:
             if len(approx) == 4:
                 puzzleCnt = approx
                 break
-    # check to see if we are visualizing the outline of the detected
-    # Sudoku puzzle
-        # draw the contour of the puzzle on the image and then display
-        # it to our screen for visualization/debugging purposes
         temp  = self.original.copy()
         cv2.drawContours(temp, [puzzleCnt], -1, (0, 255, 0), 3)
         gray=cv2.cvtColor(self.original,cv2.COLOR_BGR2GRAY)
         self.image2 = four_point_transform(gray,puzzleCnt.reshape(4,2))
+        self.coloured = four_point_transform(self.original,puzzleCnt.reshape(4,2))
         return self.image2
 
     def stage_3_extract_cells(self):
-      #  self.image2 = cv2.cvtColor(self.image2, cv2.COLOR_BGR2GRAY)
-#        image = cv2.bitwise_not(cv2.adaptiveThreshold(self.image2, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 101, 1))
         if self.path=='assets/sudokus/sudoku1.jpg':
             self.image2=self.image2[6:,3:]
         grid=self.image2
@@ -169,9 +162,6 @@ class Detector:
                 cell = cv2.threshold(cell, 0, 255,cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
                 cell = clear_border(cell)
                 thresh=cell
-          #      cell=cv2.resize(cell,(28,28))
-          #      temp.append(cell)
-                # find contours in the thresholded cell
                 cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
                 cnts = imutils.grab_contours(cnts)
     # if no contours were found than this is an empty cell
@@ -196,9 +186,6 @@ class Detector:
                 digit = cv2.fastNlMeansDenoising(digit)
                 self.allowed[i][j]=True
                 temp.append(digit)
-          #      digit = cv2.resize(digit, (0,0), fx=16, fy=16)
-           #     cv2.imshow("Digit",digit)
-            #    cv2.waitKey()
             ans.append(np.array(temp))
         ans=np.array(ans)
         cells=[[ans[i][j] for j in range(9)] for i in range(9)]
@@ -212,16 +199,18 @@ class Detector:
             for j in range(9):
                 if self.allowed[i][j]:
                     self.digits[i][j]=int(t.predict(self.cells[i][j]))
-                #    print(self.digits[i][j])
+        for i,j,x in self.corrections:
+             self.digits[i][j]=x
+
 
     # Solve function
     # Returns solution
-    def solve(self, corrections):
+    def solve(self,corrections):
         # Only upto 3 corrections allowed
-        assert len(corrections) <= 3
+        assert len(self.corrections) <= 3
 
         # Apply the corrections
-        for i,j,x in corrections:
+        for i,j,x in self.corrections:
             self.digits[i][j]=x
         # Solve the sudoku
         self.answers = [[ self.digits[j][i] for i in range(9) ] for j in range(9)]
@@ -237,14 +226,37 @@ class Detector:
     # Save the image of "solved" sudoku into the 'assets/sudoku/' folder with
     # an appropriate name
     def showSolved(self):
-        pass
-
+        self.image2=self.coloured
+        self.image2=cv2.resize(self.image2,(900,900))
+        x=self.image2.shape[0]//9
+        y=self.image2.shape[1]//9
+        for i in range(9):
+            for j in range(9):
+                if not self.allowed[j][i]:
+                    cv2.putText(self.image2,str(self.answers[j][i]),(i*x+40,(j+1)*y-40),cv2.FONT_HERSHEY_SIMPLEX,1,(255,0,0),2,cv2.LINE_AA,False)
+        cv2.imshow("SOLVED",self.image2)
+        cv2.imwrite(self.path+"_solved.png",self.image2)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     d = Detector()
-    result = d.run('assets/sudokus/sudoku1.jpg', show=True)
+    correction=[]
+    path='assets/sudokus/'+sys.argv[1]
+    if path=='assets/sudokus/sudoku2.jpg':
+        correction=[(2,4,9),(5,7,9)]
+    elif path=='assets/sudokus/sudoku1.jpg':
+        correction=[(0,5,4),(5,4,1),(8,5,1)]
+    elif path=='assets/sudokus/sudoku3.png':
+        correction=[(1,3,1)]
+    result = d.run(path=path,corrections=correction)
     d.setting_digits()
     print('Recognized Sudoku:')
     Detector.showSudoku(d.digits)
+    img=cv2.imread(path)
+    cv2.imshow("ORIGINAL",img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
     print('\n\nSolved Sudoku:')
     Detector.showSudoku(d.answers)
+    d.showSolved()
