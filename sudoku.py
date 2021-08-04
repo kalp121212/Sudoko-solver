@@ -144,6 +144,7 @@ class Detector:
     def stage_3_extract_cells(self):
         if self.path=='assets/sudokus/sudoku1.jpg':
             self.image2=self.image2[6:,3:]
+            self.coloured=self.coloured[6:,3:]
         grid=self.image2
         edge_h = np.shape(grid)[0]
         edge_w = np.shape(grid)[1]
@@ -233,7 +234,7 @@ class Detector:
         for i in range(9):
             for j in range(9):
                 if not self.allowed[j][i]:
-                    cv2.putText(self.image2,str(self.answers[j][i]),(i*x+40,(j+1)*y-40),cv2.FONT_HERSHEY_SIMPLEX,1,(255,0,0),2,cv2.LINE_AA,False)
+                    cv2.putText(self.image2,str(self.answers[j][i]),(i*x+30,(j+1)*y-30),cv2.FONT_HERSHEY_SIMPLEX,2,(255,0,0),3,cv2.LINE_AA,False)
         cv2.imshow("SOLVED",self.image2)
         cv2.imwrite(self.path+"_solved.png",self.image2)
         cv2.waitKey(0)
