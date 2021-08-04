@@ -4,4 +4,10 @@ Given an image, this code detects whether a sudoku is present and extracted digi
 
 In the assests/sudokus folder there are pictures of solved and unsolved sudokus, theres also a folder called bad which has sudokus which couldnt get detected properly.
 
-To run the code for any sudoku, run it as python3 sudoku.py name.jpg, where name.jpg is the name of the sudoku u want to run.
+To run the code for any sudoku,
+1) Install all the requirements by running the command pip -r install requirements.txt.
+2) run sudoku.py it as python3 sudoku.py name.jpg, where name.jpg is the name of the sudoku u want to run.
+3) Now, if solved, a solved sudoku with name name_solved.png will be saved in the assets/sudokus.
+
+If you want to make changed in the CNN model, you can edit the model.py file and train the model by running the command:
+python3 model.py -train.
